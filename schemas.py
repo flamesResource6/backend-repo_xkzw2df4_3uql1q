@@ -1,48 +1,33 @@
 """
-Database Schemas
+Database Schemas for Productivity & Roster App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB.
+Collection name is the lowercase of the class name (e.g., User -> "user").
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Literal
 
-from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
-
+# Roles: admin, manager, member
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
+    email: EmailStr = Field(..., description="Email address")
+    alias: Optional[str] = Field(None, description="Short name used internally")
+    role: Literal["admin", "manager", "member"] = Field("member", description="Access role")
+    manager_id: Optional[str] = Field(None, description="User ID of the reporting manager")
+    geo: Optional[str] = Field(None, description="Geo location, e.g., India, US, Costa Rica")
+    timezone: Optional[str] = Field(None, description="IANA timezone, e.g., Asia/Kolkata, America/New_York")
     is_active: bool = Field(True, description="Whether user is active")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Tasktype(BaseModel):
+    name: str = Field(..., description="Task name visible in calendar")
+    code: Optional[str] = Field(None, description="Short code, e.g., DEV, QA, MEET")
+    description: Optional[str] = Field(None, description="Details about the task type")
+    active: bool = Field(True, description="Whether task type is available for assignment")
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Roster(BaseModel):
+    user_id: str = Field(..., description="Assignee user id")
+    tasktype_id: str = Field(..., description="Task type id")
+    start_time: str = Field(..., description="ISO datetime string (UTC preferred)")
+    end_time: str = Field(..., description="ISO datetime string (UTC preferred)")
+    timezone: Optional[str] = Field(None, description="Assignee timezone at scheduling time")
+    notes: Optional[str] = Field(None, description="Optional notes")
